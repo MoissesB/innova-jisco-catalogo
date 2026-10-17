@@ -22,6 +22,9 @@
   Object.assign(copy.en,{relatedTitle:'Explore other models',relatedIntro:'Three frames in view. Scroll through the full catalogue without leaving this product page.',technicalTitle:'Reference details',finishLabel:'Finishes',frameLabel:'Frame type',sizeLabel:'Size',styleLabel:'Style',materialLabel:'Material',colorsLabel:'Colours',sourceDetails:'Details from the official JISCO product page',collectionModels:'Models to explore',allCollectionModels:'Explore full catalogue ↗',filmMoments:'More MARÉA moments',filmMomentsBody:'Four original scenes from the campaign, brought together in one visual strip.',editorialModelsNote:'The films present JISCO’s visual universe; references are grouped using official catalogue data.'});
   Object.assign(copy.fr,{relatedTitle:'Découvrez d’autres modèles',relatedIntro:'Trois montures visibles. Faites défiler tout le catalogue sans quitter cette fiche.',technicalTitle:'Détails de la référence',finishLabel:'Finitions',frameLabel:'Type de monture',sizeLabel:'Taille',styleLabel:'Style',materialLabel:'Matériau',colorsLabel:'Couleurs',sourceDetails:'Données de la fiche produit officielle JISCO',collectionModels:'Modèles à découvrir',allCollectionModels:'Explorer le catalogue complet ↗',filmMoments:'Autres moments MARÉA',filmMomentsBody:'Quatre scènes originales de la campagne réunies dans une seule bande visuelle.',editorialModelsNote:'Les films présentent l’univers visuel de JISCO ; les références sont regroupées selon les données du catalogue officiel.'});
   copy.es.newBadge='NUEVO';copy.en.newBadge='NEW';copy.fr.newBadge='NOUVEAU';
+  Object.assign(copy.es,{miniContext:'Distribución profesional · JISCO',brandsMenu:'Marcas',globalOrder:'Pedido global',oneSelection:'Una selección para las cuatro firmas.',globalTerms:'Disponibilidad y condiciones sujetas a confirmación de Innova. JISCO no tiene un mínimo configurado.',openSelection:'Abrir selección →'});
+  Object.assign(copy.en,{miniContext:'Professional distribution · JISCO',brandsMenu:'Brands',globalOrder:'Multi-brand selection',oneSelection:'One selection for all four brands.',globalTerms:'Availability and terms are subject to Innova confirmation. JISCO has no configured minimum.',openSelection:'Open selection →'});
+  Object.assign(copy.fr,{miniContext:'Distribution professionnelle · JISCO',brandsMenu:'Marques',globalOrder:'Sélection multimarque',oneSelection:'Une sélection commune aux quatre marques.',globalTerms:'Disponibilité et conditions sous réserve de confirmation par Innova. Aucun minimum n’est configuré pour JISCO.',openSelection:'Ouvrir la sélection →'});
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let lang = localStorage.getItem('jisco-lang') || 'es';
   if (!copy[lang]) lang = 'es';
@@ -202,6 +205,13 @@
     previousSection=section;
   }
   function bind(){
+    const miniShell=$('.innova-mini-menu-shell');
+    const miniTrigger=$('[data-mini-menu-trigger]');
+    const closeMiniMenu=()=>{miniShell.classList.remove('is-open');miniTrigger.setAttribute('aria-expanded','false')};
+    miniTrigger.addEventListener('click',()=>{const open=miniShell.classList.toggle('is-open');miniTrigger.setAttribute('aria-expanded',String(open))});
+    document.addEventListener('click',event=>{if(!miniShell.contains(event.target))closeMiniMenu()});
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMiniMenu()});
+    $$('[data-mini-brand]').forEach(section=>{const activate=()=>$$('[data-mini-image]').forEach(image=>image.classList.toggle('is-active',image.dataset.miniImage===section.dataset.miniBrand));section.addEventListener('mouseenter',activate);section.addEventListener('focusin',activate)});
     document.addEventListener('click',event=>{if(event.button===0&&event.target.closest('a[data-related-product]')&&!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey)jumpToRelatedProduct=true});
     document.addEventListener('click',event=>{const button=event.target.closest('[data-rail-scroll]');if(!button)return;const rail=document.getElementById(button.getAttribute('aria-controls'));if(rail)rail.scrollBy({left:rail.clientWidth*.9*Number(button.dataset.railScroll),behavior:'smooth'})});
     $('#language').addEventListener('change',event=>setLanguage(event.target.value));
