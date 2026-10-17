@@ -2,6 +2,7 @@
   const base = new URL('./', location.href);
   const asset = path => new URL(String(path || '').replace(/^\/+/, ''), base).href;
   const portal = 'https://innova-boutique.com';
+  const parentOrigin = (()=>{try{const ref=new URL(document.referrer);return /^(localhost|127\.0\.0\.1)$/.test(ref.hostname)?ref.origin:portal}catch{return portal}})();
   if(window.parent===window && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
     location.replace(`${portal}/jisco/${location.hash}`);
     return;
@@ -93,7 +94,7 @@
     if(!activeProduct||!activeVariant)return;
     const quantity=Math.max(1,Math.min(999,Number($('#quantity').value)||1));
     const item={brand:'jisco',productId:activeProduct.source_id,model:activeProduct.name,name:activeProduct.name,sku:activeVariant.sku,color:activeVariant.color_name,quantity,key:`jisco:${activeVariant.source_id}`,image:variantImage(activeVariant),material:(activeVariant.materials||[]).join(' · '),measurements:Object.entries(activeVariant.measurements||{}).map(([k,v])=>`${k}: ${v}`).join(' · '),sourceUrl:activeVariant.source_url};
-    if(window.parent!==window){window.parent.postMessage({type:'innova-boutique:add-item',item},portal)}
+    if(window.parent!==window){window.parent.postMessage({type:'innova-boutique:add-item',item},parentOrigin)}
     else {
       const key='innova-boutique-order-v1';
       let order;try{order=JSON.parse(localStorage.getItem(key)||'null')}catch{}
@@ -123,7 +124,7 @@
       if(model)renderProduct(model,model.variants.find(v=>v.source_id===variantId));else location.hash='#/catalogo';
     }
     if(section==='story')renderVideos();
-    if(window.parent!==window)window.parent.postMessage({type:'innova-brand-route',brand:'jisco',route},portal);
+    if(window.parent!==window)window.parent.postMessage({type:'innova-brand-route',brand:'jisco',route},parentOrigin);
     window.scrollTo({top:0,behavior:'auto'});
   }
   function bind(){
