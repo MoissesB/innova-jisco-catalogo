@@ -22,6 +22,9 @@
   Object.assign(copy.en,{relatedTitle:'Explore other models',relatedIntro:'Three frames in view. Scroll through the full catalogue without leaving this product page.',technicalTitle:'Reference details',finishLabel:'Finishes',frameLabel:'Frame type',sizeLabel:'Size',styleLabel:'Style',materialLabel:'Material',colorsLabel:'Colours',sourceDetails:'Details from the official JISCO product page',collectionModels:'Models to explore',allCollectionModels:'Explore full catalogue ↗',filmMoments:'More MARÉA moments',filmMomentsBody:'Four original scenes from the campaign, brought together in one visual strip.',editorialModelsNote:'The films present JISCO’s visual universe; references are grouped using official catalogue data.'});
   Object.assign(copy.fr,{relatedTitle:'Découvrez d’autres modèles',relatedIntro:'Trois montures visibles. Faites défiler tout le catalogue sans quitter cette fiche.',technicalTitle:'Détails de la référence',finishLabel:'Finitions',frameLabel:'Type de monture',sizeLabel:'Taille',styleLabel:'Style',materialLabel:'Matériau',colorsLabel:'Couleurs',sourceDetails:'Données de la fiche produit officielle JISCO',collectionModels:'Modèles à découvrir',allCollectionModels:'Explorer le catalogue complet ↗',filmMoments:'Autres moments MARÉA',filmMomentsBody:'Quatre scènes originales de la campagne réunies dans une seule bande visuelle.',editorialModelsNote:'Les films présentent l’univers visuel de JISCO ; les références sont regroupées selon les données du catalogue officiel.'});
   copy.es.newBadge='NUEVO';copy.en.newBadge='NEW';copy.fr.newBadge='NOUVEAU';
+  Object.assign(copy.es,{filmModel:'Explorar modelo',featuredModel:'Modelo destacado del catálogo',openFullProduct:'Ver ficha completa ↗',closeProduct:'Cerrar ficha',modelShown:'Modelo sugerido para explorar esta selección; la película presenta la campaña de JISCO.'});
+  Object.assign(copy.en,{filmModel:'Explore frame',featuredModel:'Featured catalogue frame',openFullProduct:'View full product ↗',closeProduct:'Close product',modelShown:'A suggested frame from this selection; the film presents the JISCO campaign.'});
+  Object.assign(copy.fr,{filmModel:'Découvrir le modèle',featuredModel:'Modèle du catalogue',openFullProduct:'Voir la fiche complète ↗',closeProduct:'Fermer la fiche',modelShown:'Une monture suggérée dans cette sélection ; le film présente la campagne JISCO.'});
   Object.assign(copy.es,{miniContext:'Distribución profesional · JISCO',brandsMenu:'Marcas',globalOrder:'Pedido global',oneSelection:'Una selección para las cuatro firmas.',globalTerms:'Disponibilidad y condiciones sujetas a confirmación de Innova. JISCO no tiene un mínimo configurado.',openSelection:'Abrir selección →'});
   Object.assign(copy.en,{miniContext:'Professional distribution · JISCO',brandsMenu:'Brands',globalOrder:'Multi-brand selection',oneSelection:'One selection for all four brands.',globalTerms:'Availability and terms are subject to Innova confirmation. JISCO has no configured minimum.',openSelection:'Open selection →'});
   Object.assign(copy.fr,{miniContext:'Distribution professionnelle · JISCO',brandsMenu:'Marques',globalOrder:'Sélection multimarque',oneSelection:'Une sélection commune aux quatre marques.',globalTerms:'Disponibilité et conditions sous réserve de confirmation par Innova. Aucun minimum n’est configuré pour JISCO.',openSelection:'Ouvrir la sélection →'});
@@ -32,6 +35,10 @@
   let activeProduct = null;
   let activeVariant = null;
   let activeView = 'front';
+  let filmProduct = null;
+  let filmVariant = null;
+  let filmView = 'front';
+  let filmReturnFocus = null;
   const t = key => copy[lang][key] || copy.es[key] || key;
   const localizeValue=value=>({
     en:{Acetato:'Acetate',Metal:'Metal',Nylon:'Nylon',Titanium:'Titanium',Hombre:'Men',Mujer:'Women',Unisex:'Unisex'},
@@ -165,10 +172,23 @@
     $('#catalogCampaigns').innerHTML=`<p class="editorial-note">${esc(t('editorialModelsNote'))}</p>`+campaignSets.map((set,index)=>campaignBlock(set,index)).join('');
   }
   function renderVideos(){
-    const main=campaignSets.map(set=>`<article class="story-film"><div class="story-film__media">${film(set.video,set.image,set.title+' · JISCO')}</div><div class="story-film__copy"><span class="eyebrow">JISCO / ${esc(set.title)}</span><h3>${esc(set.title)}</h3><p>${esc(t(set.id+'Description'))}</p></div></article>`).join('');
-    const extras=campaignSets[0].extras.map((path,index)=>`<div class="story-moment">${film(path,campaignSets[0].image,'MARÉA · '+(index+2))}<span>MARÉA / 0${index+2}</span></div>`).join('');
+    const pick=(set,index=0)=>catalog.filter(set.select)[index]||catalog.filter(set.select)[0];
+    const filmAction=model=>model?`<button class="story-film__action" type="button" data-film-model="${esc(slug(model))}" aria-label="${esc(t('filmModel')+' '+model.name)}">${esc(t('filmModel'))} <span aria-hidden="true">↗</span></button>`:'';
+    const main=campaignSets.map((set,index)=>{const model=pick(set);return `<article class="story-film"><div class="story-film__media">${film(set.video,set.image,set.title+' · JISCO')}${filmAction(model)}</div><div class="story-film__copy"><span class="eyebrow">0${index+1} / JISCO</span><h3>${esc(set.title)}</h3><p>${esc(t(set.id+'Description'))}</p>${model?`<span class="story-film__model">${esc(t('featuredModel'))}: ${esc(model.name)}</span>`:''}</div></article>`}).join('');
+    const extras=campaignSets[0].extras.map((path,index)=>{const model=pick(campaignSets[0],index+1);return `<div class="story-moment">${film(path,campaignSets[0].image,'MARÉA · '+(index+2))}<span>MARÉA / 0${index+2}${model?' · '+esc(model.name):''}</span>${filmAction(model)}</div>`}).join('');
     $('#videoGallery').innerHTML=`<div class="story-films__heading"><span class="eyebrow">JISCO / FILMS</span><h2>${esc(t('campaignTitle'))}</h2><p>${esc(t('campaignBody'))}</p></div><div class="story-films__grid">${main}</div><div class="story-moments"><div><span class="eyebrow">JISCO / MARÉA</span><h3>${esc(t('filmMoments'))}</h3><p>${esc(t('filmMomentsBody'))}</p></div><div class="story-moments__track">${extras}</div></div>`;
   }
+  function renderFilmProduct(){
+    if(!filmProduct||!filmVariant)return;
+    const v=filmVariant,m=filmProduct;
+    const side=Boolean(v.side_path||v.side_url);
+    $('#filmProductContent').innerHTML=`<div class="film-product-dialog__media"><img src="${esc(variantImage(v,filmView))}" alt="${esc(m.name+' · '+v.color_name+' · '+t(filmView==='side'?'side':'front'))}"><span>© JISCO EYEWEAR</span></div><div class="film-product-dialog__info"><span class="eyebrow">JISCO / ${esc(t('featuredModel'))}</span><h2 id="filmProductTitle">${esc(m.name)}</h2><span class="sku">${esc(v.sku)}</span><p>${esc(productDescription(m,v))}</p><p class="film-product-dialog__note">${esc(t('modelShown'))}</p><div class="film-product-dialog__views" role="group" aria-label="${esc(t('front'))} / ${esc(t('side'))}"><button type="button" data-film-view="front" aria-pressed="${filmView==='front'}">${esc(t('front'))}</button>${side?`<button type="button" data-film-view="side" aria-pressed="${filmView==='side'}">${esc(t('side'))}</button>`:''}</div><div class="film-product-dialog__variants" role="group" aria-label="${esc(t('color'))}">${m.variants.map(option=>`<button type="button" data-film-variant="${esc(option.source_id)}" aria-pressed="${option.source_id===v.source_id}"><img src="${esc(variantImage(option))}" alt=""><span>${esc(option.color_name)}</span></button>`).join('')}</div><a class="film-product-dialog__link" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}" data-film-full>${esc(t('openFullProduct'))}</a></div>`;
+  }
+  function openFilmProduct(model,trigger){
+    filmProduct=model;filmVariant=model.variants.find(v=>v.front_path)||model.variants[0];filmView='front';filmReturnFocus=trigger;
+    renderFilmProduct();$('#filmProductDialog').showModal();$('[data-film-close]').focus();
+  }
+  function closeFilmProduct(){const dialog=$('#filmProductDialog');if(dialog.open)dialog.close();filmProduct=null;filmReturnFocus?.focus();filmReturnFocus=null}
   let filmObserver;
   function observeFilms(){
     if(!filmObserver){filmObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{const video=entry.target;if(entry.isIntersecting&&!document.hidden&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)video.play().catch(()=>{});else video.pause()}),{threshold:.08})}
@@ -177,6 +197,7 @@
   let previousSection='';
   let jumpToRelatedProduct=false;
   function renderRoute(){
+    if($('#filmProductDialog').open)closeFilmProduct();
     const route=decodeURIComponent(location.hash.replace(/^#/,'')||'/');
     const [path,query='']=route.split('?');
     const section=path.startsWith('/catalogo')?'catalog':path.startsWith('/modelo/')?'product':path.startsWith('/historia')?'story':'home';
@@ -205,6 +226,9 @@
     previousSection=section;
   }
   function bind(){
+    document.addEventListener('click',event=>{const trigger=event.target.closest('[data-film-model]');if(trigger){const model=catalog.find(m=>slug(m)===trigger.dataset.filmModel);if(model)openFilmProduct(model,trigger)}const variant=event.target.closest('[data-film-variant]');if(variant&&filmProduct){filmVariant=filmProduct.variants.find(v=>v.source_id===variant.dataset.filmVariant)||filmVariant;filmView='front';renderFilmProduct()}const view=event.target.closest('[data-film-view]');if(view){filmView=view.dataset.filmView;renderFilmProduct()}if(event.target.closest('[data-film-close]'))closeFilmProduct();if(event.target.closest('[data-film-full]'))closeFilmProduct()});
+    $('#filmProductDialog').addEventListener('click',event=>{if(event.target===$('#filmProductDialog'))closeFilmProduct()});
+    $('#filmProductDialog').addEventListener('close',()=>{filmProduct=null;filmReturnFocus?.focus();filmReturnFocus=null});
     const miniShell=$('.innova-mini-menu-shell');
     const miniTrigger=$('[data-mini-menu-trigger]');
     const closeMiniMenu=()=>{miniShell.classList.remove('is-open');miniTrigger.setAttribute('aria-expanded','false')};
