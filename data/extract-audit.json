@@ -1,0 +1,20 @@
+{
+  "collection_url": "https://www.jiscoeyewear.com/coleccion",
+  "collection_sha256": "c54b2c5cdc0cc910e06864ec50e5082430dce01b47c1e916f07f6c0ae2234866",
+  "models": 235,
+  "variants": 854,
+  "materials": {
+    "318": "Sol",
+    "320": "Acetato",
+    "321": "Eco-titanium",
+    "322": "Titanium",
+    "323": "Metal",
+    "324": "Combi",
+    "325": "TROGAMID myCX eCO",
+    "326": "Rimless",
+    "330": "Petite"
+  },
+  "failures": [
+    "https://www.jiscoeyewear.com/majestic/m/gngr: front or side image not found"
+  ]
+}
