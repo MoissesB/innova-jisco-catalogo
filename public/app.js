@@ -21,6 +21,7 @@
   Object.assign(copy.es,{relatedTitle:'Explora otros modelos',relatedIntro:'Tres monturas a la vista. Desliza para recorrer el catálogo completo sin salir de esta ficha.',technicalTitle:'Detalles de la referencia',finishLabel:'Acabados',frameLabel:'Tipo de montura',sizeLabel:'Talla',styleLabel:'Estilo',materialLabel:'Material',colorsLabel:'Colores',sourceDetails:'Datos de la ficha oficial JISCO',collectionModels:'Modelos para explorar',allCollectionModels:'Explorar catálogo completo ↗',filmMoments:'Otros momentos de MARÉA',filmMomentsBody:'Cuatro escenas originales de la campaña, reunidas en una sola cinta visual.',editorialModelsNote:'Las películas presentan el universo visual de JISCO; las referencias se agrupan según los datos del catálogo oficial.'});
   Object.assign(copy.en,{relatedTitle:'Explore other models',relatedIntro:'Three frames in view. Scroll through the full catalogue without leaving this product page.',technicalTitle:'Reference details',finishLabel:'Finishes',frameLabel:'Frame type',sizeLabel:'Size',styleLabel:'Style',materialLabel:'Material',colorsLabel:'Colours',sourceDetails:'Details from the official JISCO product page',collectionModels:'Models to explore',allCollectionModels:'Explore full catalogue ↗',filmMoments:'More MARÉA moments',filmMomentsBody:'Four original scenes from the campaign, brought together in one visual strip.',editorialModelsNote:'The films present JISCO’s visual universe; references are grouped using official catalogue data.'});
   Object.assign(copy.fr,{relatedTitle:'Découvrez d’autres modèles',relatedIntro:'Trois montures visibles. Faites défiler tout le catalogue sans quitter cette fiche.',technicalTitle:'Détails de la référence',finishLabel:'Finitions',frameLabel:'Type de monture',sizeLabel:'Taille',styleLabel:'Style',materialLabel:'Matériau',colorsLabel:'Couleurs',sourceDetails:'Données de la fiche produit officielle JISCO',collectionModels:'Modèles à découvrir',allCollectionModels:'Explorer le catalogue complet ↗',filmMoments:'Autres moments MARÉA',filmMomentsBody:'Quatre scènes originales de la campagne réunies dans une seule bande visuelle.',editorialModelsNote:'Les films présentent l’univers visuel de JISCO ; les références sont regroupées selon les données du catalogue officiel.'});
+  copy.es.newBadge='NUEVO';copy.en.newBadge='NEW';copy.fr.newBadge='NOUVEAU';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let lang = localStorage.getItem('jisco-lang') || 'es';
   if (!copy[lang]) lang = 'es';
@@ -79,15 +80,15 @@
     $('#emptyResults').hidden=models.length>0;
     $('#modelGrid').innerHTML=models.map(m=>{
       const v=m.variants.find(x=>x.front_path)||m.variants[0];
-      return `<a class="model-card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"><figure><img src="${esc(variantImage(v))}" alt="${esc(m.name)} · ${esc(v.color_name)}" loading="lazy"></figure><div class="model-card__body"><strong class="model-card__title">${esc(m.name)}</strong><span class="model-card__meta">${esc(m.category==='sun'?t('sun'):t('optical'))}<br>${m.variants.length} ${t('variants')}</span></div></a>`;
+      return `<a class="model-card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"><figure>${m.season_id==='298'?`<em class="model-new-badge">${esc(t('newBadge'))}</em>`:''}<img src="${esc(variantImage(v))}" alt="${esc(m.name)} · ${esc(v.color_name)}" loading="lazy"></figure><div class="model-card__body"><strong class="model-card__title">${esc(m.name)}</strong><span class="model-card__meta">${esc(m.category==='sun'?t('sun'):t('optical'))}<br>${m.variants.length} ${t('variants')}</span></div></a>`;
     }).join('');
   }
-  function railCard(m){
+  function railCard(m,related=false){
     const v=m.variants.find(x=>x.front_path)||m.variants[0];
-    return `<a class="model-rail__card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"><img src="${esc(variantImage(v))}" alt="${esc(m.name+' · '+v.color_name)}" loading="lazy"><span><strong>${esc(m.name)}</strong><small>${esc(m.category==='sun'?t('sun'):t('optical'))} · ${m.variants.length} ${esc(t('variants'))}</small></span></a>`;
+    return `<a class="model-rail__card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"${related?' data-related-product':''}>${m.season_id==='298'?`<em class="model-new-badge">${esc(t('newBadge'))}</em>`:''}<img src="${esc(variantImage(v))}" alt="${esc(m.name+' · '+v.color_name)}" loading="lazy"><span><strong>${esc(m.name)}</strong><small>${esc(m.category==='sun'?t('sun'):t('optical'))} · ${m.variants.length} ${esc(t('variants'))}</small></span></a>`;
   }
-  function modelRail(models,label,id){
-    return `<div class="model-rail"><div class="model-rail__head"><div><span class="eyebrow">JISCO / ${models.length} ${esc(t('models'))}</span><h3>${esc(label)}</h3></div><div class="model-rail__arrows"><button type="button" data-rail-scroll="-1" aria-controls="${esc(id)}" aria-label="${esc(t('previous'))}">←</button><button type="button" data-rail-scroll="1" aria-controls="${esc(id)}" aria-label="${esc(t('next'))}">→</button></div></div><div class="model-rail__track" id="${esc(id)}">${models.map(railCard).join('')}</div></div>`;
+  function modelRail(models,label,id,related=false){
+    return `<div class="model-rail"><div class="model-rail__head"><div><span class="eyebrow">JISCO / ${models.length} ${esc(t('models'))}</span><h3>${esc(label)}</h3></div><div class="model-rail__arrows"><button type="button" data-rail-scroll="-1" aria-controls="${esc(id)}" aria-label="${esc(t('previous'))}">←</button><button type="button" data-rail-scroll="1" aria-controls="${esc(id)}" aria-label="${esc(t('next'))}">→</button></div></div><div class="model-rail__track" id="${esc(id)}">${models.map(model=>railCard(model,related)).join('')}</div></div>`;
   }
   function productDescription(model,variant){
     const material=localizedMaterials(variant.materials||model.materials||[]);
@@ -109,6 +110,8 @@
     const measures=Object.entries(activeVariant.measurements||{}).map(([k,v])=>`<div><strong>${esc(k)}</strong><span>${esc(v)}</span></div>`).join('');
     const hasSide=Boolean(activeVariant.side_path||activeVariant.side_url);
     $('#productContent').innerHTML=`<a class="product-back" href="#/catalogo">${t('viewCatalog')}</a><div class="product-main"><div><figure class="product-image"><img id="mainProductImage" src="${esc(variantImage(activeVariant))}" alt="${esc(model.name+' '+activeVariant.color_name+', '+t('front'))}"></figure><p class="product-image-credit">${esc(t('productPhotoBy'))}</p><div class="view-tabs"><button type="button" data-view-image="front" aria-pressed="true">${t('front')}</button>${hasSide?`<button type="button" data-view-image="side" aria-pressed="false">${t('side')}</button>`:''}</div></div><div class="product-info"><span class="eyebrow">JISCO · ${model.category==='sun'?t('sun'):t('optical')}</span><h1>${esc(model.name)}</h1><span class="sku">${esc(activeVariant.sku)}</span><p>${esc(material)}${style?' · '+esc(style):''}${model.size?' · '+esc(model.size):''}</p><div class="colors" role="group" aria-label="${esc(t('color'))}">${model.variants.map(v=>`<button type="button" data-variant="${esc(v.source_id)}" aria-pressed="${v.source_id===activeVariant.source_id}"><img src="${esc(variantImage(v))}" alt="" loading="lazy"><span>${esc(v.color_name||v.path.split('/').pop())}</span></button>`).join('')}</div><h2 class="eyebrow">${t('measures')}</h2><div class="measurements">${measures}</div><div class="purchase"><label>${t('quantity')} <input id="quantity" type="number" min="1" max="999" value="1" inputmode="numeric"></label><button class="button" id="addOrder" type="button">${t('add')} ↗</button><p>${t('availability')}</p></div></div></div><section class="product-details"><span class="eyebrow">${esc(t('sourceDetails'))}</span><h2>${esc(t('technicalTitle'))}</h2><p>${esc(productDescription(model,activeVariant))}</p><dl><div><dt>${esc(t('frameLabel'))}</dt><dd>${esc(model.category==='sun'?t('sun'):t('optical'))}</dd></div><div><dt>${esc(t('materialLabel'))}</dt><dd>${esc(material||'—')}</dd></div><div><dt>${esc(t('sizeLabel'))}</dt><dd>${esc(model.size||'—')}</dd></div><div><dt>${esc(t('styleLabel'))}</dt><dd>${esc(style||'—')}</dd></div><div><dt>${esc(t('colorsLabel'))}</dt><dd>${esc(activeVariant.color_name)}</dd></div><div><dt>${esc(t('finishLabel'))}</dt><dd>${model.variants.length}</dd></div></dl></section><section class="product-related"><p>${esc(t('relatedIntro'))}</p>${modelRail(relatedModels(model),t('relatedTitle'),'relatedModels')}</section><nav class="product-nav"><a href="#/modelo/${encodeURIComponent(slug(catalog[(index-1+catalog.length)%catalog.length]))}">${t('previous')}</a><a href="#/modelo/${encodeURIComponent(slug(catalog[(index+1)%catalog.length]))}">${t('next')}</a></nav>`;
+    if(model.season_id==='298')$('#productContent .product-info .eyebrow').insertAdjacentHTML('afterend',`<span class="product-new-badge">${esc(t('newBadge'))}</span>`);
+    $$('#relatedModels a').forEach(link=>link.dataset.relatedProduct='');
     $$('[data-variant]').forEach(button=>button.addEventListener('click',()=>{
       const v=model.variants.find(item=>item.source_id===button.dataset.variant);
       if(v)location.hash=`#/modelo/${encodeURIComponent(slug(model))}/${encodeURIComponent(v.source_id)}`;
@@ -147,12 +150,13 @@
   }
   function campaignBlock(set,index,home=false){
     const models=catalog.filter(set.select);
-    const shown=home?models.slice(0,6):models;
+    const shown=home&&set.id!=='marea'?models.slice(0,6):models;
     const id=`${home?'home':'catalog'}-${set.id}-models`;
     return `<section class="editorial-block editorial-block--${esc(set.id)}" aria-label="${esc(set.title)}"><div class="editorial-block__intro"><span class="eyebrow">0${index+1} / JISCO</span><h2>${esc(set.title)}</h2><p>${esc(t(set.id+'Description'))}</p></div><div class="editorial-block__film">${film(set.video,set.image,set.title+' · JISCO')}<span class="editorial-block__film-label">${esc(set.title)} <small>© JISCO EYEWEAR</small></span></div>${modelRail(shown,t(set.group),id)}${home?`<a class="editorial-block__all" href="#/catalogo">${esc(t('allCollectionModels'))}</a>`:''}</section>`;
   }
   function renderHomeCollections(){
-    $('#homeCollections').innerHTML=campaignSets.map((set,index)=>campaignBlock(set,index,true)).join('');
+    $('#homeNewArrivals').innerHTML=campaignBlock(campaignSets[0],0,true);
+    $('#homeCollections').innerHTML=campaignSets.slice(1).map((set,index)=>campaignBlock(set,index+1,true)).join('');
   }
   function renderCatalogFeature(){
     $('#catalogCampaigns').innerHTML=`<p class="editorial-note">${esc(t('editorialModelsNote'))}</p>`+campaignSets.map((set,index)=>campaignBlock(set,index)).join('');
@@ -168,6 +172,7 @@
     $$('.ambient-film,.home-hero__video').forEach(video=>{if(!video.dataset.observed){video.dataset.observed='1';filmObserver.observe(video)}});
   }
   let previousSection='';
+  let jumpToRelatedProduct=false;
   function renderRoute(){
     const route=decodeURIComponent(location.hash.replace(/^#/,'')||'/');
     const [path,query='']=route.split('?');
@@ -187,10 +192,17 @@
     if(section==='story')renderVideos();
     observeFilms();
     if(window.parent!==window)window.parent.postMessage({type:'innova-brand-route',brand:'jisco',route},parentOrigin);
-    if(section!=='product'||previousSection!=='product')window.scrollTo({top:0,behavior:'auto'});
+    if(section==='product'&&previousSection==='product'&&jumpToRelatedProduct){
+      const product=$('.product-view');
+      const headerHeight=$('.header').getBoundingClientRect().height;
+      const top=product.getBoundingClientRect().top+window.scrollY-headerHeight-16;
+      window.scrollTo({top:Math.max(0,top),behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    }else if(section!=='product'||previousSection!=='product')window.scrollTo({top:0,behavior:'auto'});
+    jumpToRelatedProduct=false;
     previousSection=section;
   }
   function bind(){
+    document.addEventListener('click',event=>{if(event.button===0&&event.target.closest('a[data-related-product]')&&!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey)jumpToRelatedProduct=true});
     document.addEventListener('click',event=>{const button=event.target.closest('[data-rail-scroll]');if(!button)return;const rail=document.getElementById(button.getAttribute('aria-controls'));if(rail)rail.scrollBy({left:rail.clientWidth*.9*Number(button.dataset.railScroll),behavior:'smooth'})});
     $('#language').addEventListener('change',event=>setLanguage(event.target.value));
     ['searchInput','categoryFilter','materialFilter','styleFilter','sizeFilter','colorFilter','newFilter'].forEach(id=>$('#'+id).addEventListener(id==='searchInput'?'input':'change',renderCatalog));
