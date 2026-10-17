@@ -12225,6 +12225,43 @@
       "sha256": "aa7a3a7aca1d05bf7b7cdcd86c76749d5f2d7840bfbd944e15f6787591c3e861",
       "bytes": 39088760,
       "status": "downloaded"
+    },
+    {
+      "source_url": "https://www.jiscoeyewear.com/assets/pages/202609/home/home_2.jpg",
+      "path": "/assets/campaigns/marea-horizontal.jpg",
+      "sha256": "4f0b994a62b57546116c534ade923a9d43394e12af93afe3d778b49f5d52cb6c",
+      "bytes": 370786,
+      "status": "downloaded"
+    },
+    {
+      "source_url": "https://www.jiscoeyewear.com/assets/pages/202512/coleccion/slide_2026/1.jpg",
+      "path": "/assets/campaigns/lightup-horizontal.jpg",
+      "sha256": "31841bd0e66ac28fe1db171997157971d44e067d0a0b4fb9f2a23990a8decb3e",
+      "bytes": 185540,
+      "status": "downloaded"
+    },
+    {
+      "source_url": "https://www.jiscoeyewear.com/assets/pages/jiscotheque_glow_festival/swiper/1.jpg",
+      "path": "/assets/campaigns/jiscotheque-horizontal.jpg",
+      "sha256": "0af5cc181310a4f3bf083cfa9110a370a8d5a1ea17f6e6f5d8fc413a6edf0abf",
+      "bytes": 342811,
+      "status": "downloaded"
+    },
+    {
+      "source_url": "https://www.jiscoeyewear.com/assets/pages/202512/nosotros/nosotros_4.jpg",
+      "path": "/assets/campaigns/story.jpg",
+      "sha256": "6bf2c5b2f74f1c9b8301d9ff5f92d6e85ba16390e628d2d39c61972d36e0ff07",
+      "bytes": 207112,
+      "status": "downloaded"
+    },
+    {
+      "source_url": "https://player.vimeo.com/video/1231592126",
+      "path": "/assets/campaigns/jisco-home-marea-2026.mp4",
+      "sha256": "e723196627eb330ea598009bb76584ae734596ac68e2d160cb27a7484818931b",
+      "bytes": 20475380,
+      "status": "downloaded",
+      "source_page": "https://www.jiscoeyewear.com/",
+      "note": "Official Vimeo 1920x1080 HLS video and audio streams remuxed without re-encoding for browser playback."
     }
   ],
   "press_urls": [
