@@ -34,6 +34,9 @@
   copy.es.moreCollectionModels='Más modelos de';
   copy.en.moreCollectionModels='More models from';
   copy.fr.moreCollectionModels='Plus de modèles de';
+  Object.assign(copy.es,{sunglasses:'Gafas de sol',newModels:'Modelos nuevos',aboutEyebrow:'LA MARCA / NOSOTROS',aboutTitle:'Sobre nosotros',aboutLead:'JISCO reúne dos formas de mirar: la sensibilidad mediterránea de Francisco Marín y la precisión centroeuropea de Jördis Neubauer.',aboutDetail:'La marca describe monturas creadas artesanalmente con materiales elegidos con cuidado. La luz, los colores y las formas del Mediterráneo encuentran equilibrio con una atención rigurosa a cada detalle.',aboutSource:'Conocer la historia en JISCO ↗',sustainEyebrow:'LA MARCA / COMPROMISO',sustainTitle:'Sostenibilidad',sustainLead:'JISCO vincula sus decisiones de diseño con el cuidado del Mediterráneo que inspira sus colecciones.',sustainMaterial:'En sus materiales, la marca destaca el bioacetato y las lentes de demostración biodegradables.',sustainPackaging:'Para el embalaje, describe fundas de tejido reciclado RPET, bolsas protectoras compostables y estuches planos.',sustainLogistics:'En logística, indica que utiliza cajas reciclables o reutilizadas y cinta de papel.',sustainSource:'Leer los compromisos de JISCO ↗'});
+  Object.assign(copy.en,{sunglasses:'Sunglasses',newModels:'New models',aboutEyebrow:'THE BRAND / ABOUT US',aboutTitle:'About us',aboutLead:'JISCO brings together two perspectives: Francisco Marín’s Mediterranean sensibility and Jördis Neubauer’s Central European precision.',aboutDetail:'The brand describes handcrafted frames made with carefully selected materials. Mediterranean light, colours and shapes are balanced with close attention to every detail.',aboutSource:'Explore JISCO’s story ↗',sustainEyebrow:'THE BRAND / COMMITMENT',sustainTitle:'Sustainability',sustainLead:'JISCO links its design decisions to care for the Mediterranean that inspires its collections.',sustainMaterial:'For materials, the brand highlights bio-acetate and biodegradable demonstration lenses.',sustainPackaging:'For packaging, it describes recycled RPET fabric pouches, compostable protective bags and flat-packed cases.',sustainLogistics:'For logistics, it says it uses recyclable or reused boxes and paper tape.',sustainSource:'Read JISCO’s commitments ↗'});
+  Object.assign(copy.fr,{sunglasses:'Lunettes de soleil',newModels:'Nouveaux modèles',aboutEyebrow:'LA MARQUE / À PROPOS',aboutTitle:'À propos de nous',aboutLead:'JISCO réunit deux regards : la sensibilité méditerranéenne de Francisco Marín et la précision centre-européenne de Jördis Neubauer.',aboutDetail:'La marque décrit des montures artisanales réalisées avec des matériaux soigneusement choisis. La lumière, les couleurs et les formes méditerranéennes s’équilibrent avec le souci du détail.',aboutSource:'Découvrir l’histoire de JISCO ↗',sustainEyebrow:'LA MARQUE / ENGAGEMENT',sustainTitle:'Durabilité',sustainLead:'JISCO relie ses choix de conception à la préservation de la Méditerranée qui inspire ses collections.',sustainMaterial:'Pour les matériaux, la marque met en avant le bio-acétate et les verres de démonstration biodégradables.',sustainPackaging:'Pour l’emballage, elle décrit des pochettes en tissu RPET recyclé, des sacs de protection compostables et des étuis à plat.',sustainLogistics:'Pour la logistique, elle indique utiliser des cartons recyclables ou réutilisés et du ruban adhésif en papier.',sustainSource:'Lire les engagements de JISCO ↗'});
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let lang = localStorage.getItem('jisco-lang') || 'es';
   if (!copy[lang]) lang = 'es';
@@ -46,6 +49,7 @@
   let filmView = 'front';
   let filmCollection = null;
   let filmReturnFocus = null;
+  let filmQuantity = 1;
   const t = key => copy[lang][key] || copy.es[key] || key;
   const localizeValue=value=>({
     en:{Acetato:'Acetate',Metal:'Metal',Nylon:'Nylon',Titanium:'Titanium',Hombre:'Men',Mujer:'Women',Unisex:'Unisex'},
@@ -139,13 +143,13 @@
       $('#mainProductImage').alt=`${model.name} ${activeVariant.color_name}, ${t(activeView)}`;
       $$('[data-view-image]').forEach(el=>el.setAttribute('aria-pressed',String(el===button)));
     }));
-    $('#addOrder').addEventListener('click',addOrder);
+    $('#addOrder').addEventListener('click',()=>addOrder());
   }
   function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),3500)}
-  function addOrder(){
-    if(!activeProduct||!activeVariant)return;
-    const quantity=Math.max(1,Math.min(999,Number($('#quantity').value)||1));
-    const item={brand:'jisco',productId:activeProduct.source_id,model:activeProduct.name,name:activeProduct.name,sku:activeVariant.sku,color:activeVariant.color_name,quantity,key:`jisco:${activeVariant.source_id}`,image:variantImage(activeVariant),material:(activeVariant.materials||[]).join(' · '),measurements:Object.entries(activeVariant.measurements||{}).map(([k,v])=>`${k}: ${v}`).join(' · '),sourceUrl:activeVariant.source_url};
+  function addOrder(model=activeProduct,variant=activeVariant,requestedQuantity=$('#quantity').value){
+    if(!model||!variant)return;
+    const quantity=Math.max(1,Math.min(999,Number(requestedQuantity)||1));
+    const item={brand:'jisco',productId:model.source_id,model:model.name,name:model.name,sku:variant.sku,color:variant.color_name,quantity,key:`jisco:${variant.source_id}`,image:variantImage(variant),material:(variant.materials||[]).join(' · '),measurements:Object.entries(variant.measurements||{}).map(([k,v])=>`${k}: ${v}`).join(' · '),sourceUrl:variant.source_url};
     if(window.parent!==window){window.parent.postMessage({type:'innova-boutique:add-item',item},parentOrigin)}
     else {
       const key='innova-boutique-order-v1';
@@ -189,7 +193,11 @@
     if(!filmProduct||!filmVariant)return;
     const v=filmVariant,m=filmProduct;
     const side=Boolean(v.side_path||v.side_url);
-    $('#filmProductContent').innerHTML=`<div class="film-product-dialog__media"><img src="${esc(variantImage(v,filmView))}" alt="${esc(m.name+' · '+v.color_name+' · '+t(filmView==='side'?'side':'front'))}"><span>© JISCO EYEWEAR</span></div><div class="film-product-dialog__info"><span class="eyebrow">JISCO / ${esc(t('featuredModel'))}</span><h2 id="filmProductTitle">${esc(m.name)}</h2><span class="sku">${esc(v.sku)}</span><p>${esc(productDescription(m,v))}</p><p class="film-product-dialog__note">${esc(t('modelShown'))}</p><div class="film-product-dialog__views" role="group" aria-label="${esc(t('front'))} / ${esc(t('side'))}"><button type="button" data-film-view="front" aria-pressed="${filmView==='front'}">${esc(t('front'))}</button>${side?`<button type="button" data-film-view="side" aria-pressed="${filmView==='side'}">${esc(t('side'))}</button>`:''}</div><div class="film-product-dialog__variants" role="group" aria-label="${esc(t('color'))}">${m.variants.map(option=>`<button type="button" data-film-variant="${esc(option.source_id)}" aria-pressed="${option.source_id===v.source_id}"><img src="${esc(variantImage(option))}" alt=""><span>${esc(option.color_name)}</span></button>`).join('')}</div><a class="film-product-dialog__link" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}" data-film-full>${esc(t('openFullProduct'))}</a></div>`;
+    $('#filmProductContent').innerHTML=`<div class="film-product-dialog__media"><img src="${esc(variantImage(v,filmView))}" alt="${esc(m.name+' · '+v.color_name+' · '+t(filmView==='side'?'side':'front'))}"><span>© JISCO EYEWEAR</span></div><div class="film-product-dialog__info"><span class="eyebrow">JISCO / ${esc(t('featuredModel'))}</span><h2 id="filmProductTitle">${esc(m.name)}</h2><span class="sku">${esc(v.sku)}</span><p>${esc(productDescription(m,v))}</p><p class="film-product-dialog__note">${esc(t('modelShown'))}</p><div class="film-product-dialog__views" role="group" aria-label="${esc(t('front'))} / ${esc(t('side'))}"><button type="button" data-film-view="front" aria-pressed="${filmView==='front'}">${esc(t('front'))}</button>${side?`<button type="button" data-film-view="side" aria-pressed="${filmView==='side'}">${esc(t('side'))}</button>`:''}</div><div class="film-product-dialog__variants" role="group" aria-label="${esc(t('color'))}">${m.variants.map(option=>`<button type="button" data-film-variant="${esc(option.source_id)}" aria-pressed="${option.source_id===v.source_id}"><img src="${esc(variantImage(option))}" alt=""><span>${esc(option.color_name)}</span></button>`).join('')}</div><div class="film-product-dialog__purchase"><label for="filmQuantity">${esc(t('quantity'))}</label><input id="filmQuantity" data-film-quantity type="number" inputmode="numeric" min="1" max="999" value="${filmQuantity}"><button type="button" data-film-add>${esc(t('add'))} ↗</button></div><p class="film-product-dialog__availability">${esc(t('availability'))}</p></div>`;
+    const fullLink=$('[data-film-full]');
+    fullLink.href=`#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}`;
+    fullLink.textContent=t('openFullProduct');
+    $('[data-film-catalog]').textContent=t('allCollectionModels');
     $$('#filmProductRail [data-film-related-model]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.filmRelatedModel===slug(m))));
   }
   function renderFilmRail(){
@@ -197,11 +205,13 @@
     $('#filmProductRail').innerHTML=`<div class="film-product-rail__head"><div><span class="eyebrow">JISCO / ${models.length} ${esc(t('models'))}</span><h3>${esc(t('moreCollectionModels'))} ${esc(filmCollection.title)}</h3></div><div class="film-product-rail__arrows"><button type="button" data-film-rail-scroll="-1" aria-label="${esc(t('previous'))}">←</button><button type="button" data-film-rail-scroll="1" aria-label="${esc(t('next'))}">→</button></div></div><div class="film-product-rail__track" id="filmProductRailTrack">${models.map(model=>{const variant=model.variants.find(v=>v.front_path)||model.variants[0];return `<button type="button" class="film-product-rail__card" data-film-related-model="${esc(slug(model))}" aria-pressed="${model===filmProduct}"><img src="${esc(variantImage(variant))}" alt="" loading="lazy"><span>${esc(model.name)}</span></button>`}).join('')}</div>`;
   }
   function openFilmProduct(model,trigger){
-    filmProduct=model;filmVariant=model.variants.find(v=>v.front_path)||model.variants[0];filmView='front';filmReturnFocus=trigger;
+    filmProduct=model;filmVariant=model.variants.find(v=>v.front_path)||model.variants[0];filmView='front';filmQuantity=1;filmReturnFocus=trigger;
     filmCollection=campaignSets.find(set=>set.id===trigger.dataset.filmCollection)||campaignSets.find(set=>set.select(model));
-    renderFilmRail();renderFilmProduct();$('#filmProductDialog').showModal();$('[data-film-close]').focus();
+    renderFilmRail();renderFilmProduct();$('#filmProductDialog').showModal();
+    if(window.parent!==window)window.parent.postMessage({type:'innova-boutique:modal-state',brand:'jisco',open:true},parentOrigin);
+    $('[data-film-close]').focus();
   }
-  function closeFilmProduct(){const dialog=$('#filmProductDialog');if(dialog.open)dialog.close();filmProduct=null;filmReturnFocus?.focus();filmReturnFocus=null}
+  function closeFilmProduct(){const dialog=$('#filmProductDialog');if(dialog.open)dialog.close();if(window.parent!==window)window.parent.postMessage({type:'innova-boutique:modal-state',brand:'jisco',open:false},parentOrigin);filmProduct=null;filmReturnFocus?.focus();filmReturnFocus=null}
   let filmObserver;
   function observeFilms(){
     if(!filmObserver){filmObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{const video=entry.target;if(entry.isIntersecting&&!document.hidden&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)video.play().catch(()=>{});else video.pause()}),{threshold:.08})}
@@ -209,6 +219,7 @@
   }
   let previousSection='';
   let jumpToRelatedProduct=false;
+  let jumpToCatalogFromDialog=false;
   function renderRoute(){
     if($('#filmProductDialog').open)closeFilmProduct();
     const route=decodeURIComponent(location.hash.replace(/^#/,'')||'/');
@@ -218,7 +229,7 @@
     if(section==='home')renderHomeCollections();
     if(section==='catalog'){
       renderCatalogFeature();
-      if(query){const params=new URLSearchParams(query);for(const [key,id] of [['category','categoryFilter'],['material','materialFilter']])if(params.has(key))$('#'+id).value=params.get(key)}
+      if(query){const params=new URLSearchParams(query);$('#searchInput').value='';['categoryFilter','materialFilter','styleFilter','sizeFilter','colorFilter'].forEach(id=>$('#'+id).value='');$('#newFilter').checked=params.get('new')==='1';for(const [key,id] of [['category','categoryFilter'],['material','materialFilter']])if(params.has(key))$('#'+id).value=params.get(key)}
       renderCatalog();
     }
     if(section==='product'){
@@ -235,13 +246,33 @@
       const top=product.getBoundingClientRect().top+window.scrollY-headerHeight-16;
       window.scrollTo({top:Math.max(0,top),behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     }else if(section!=='product'||previousSection!=='product')window.scrollTo({top:0,behavior:'auto'});
+    if(section==='catalog'&&(jumpToCatalogFromDialog||new URLSearchParams(query).get('new')==='1'||new URLSearchParams(query).has('category'))){
+      requestAnimationFrame(()=>$('#catalog-results').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
+    }
+    jumpToCatalogFromDialog=false;
     jumpToRelatedProduct=false;
     previousSection=section;
   }
   function bind(){
-    document.addEventListener('click',event=>{const trigger=event.target.closest('[data-film-model]');if(trigger){const model=catalog.find(m=>slug(m)===trigger.dataset.filmModel);if(model)openFilmProduct(model,trigger)}const related=event.target.closest('[data-film-related-model]');if(related){const model=catalog.find(m=>slug(m)===related.dataset.filmRelatedModel);if(model){filmProduct=model;filmVariant=model.variants.find(v=>v.front_path)||model.variants[0];filmView='front';renderFilmProduct();$('#filmProductDialog').scrollTop=0;related.focus()}}const railArrow=event.target.closest('[data-film-rail-scroll]');if(railArrow)$('#filmProductRailTrack').scrollBy({left:$('#filmProductRailTrack').clientWidth*.85*Number(railArrow.dataset.filmRailScroll),behavior:'smooth'});const variant=event.target.closest('[data-film-variant]');if(variant&&filmProduct){filmVariant=filmProduct.variants.find(v=>v.source_id===variant.dataset.filmVariant)||filmVariant;filmView='front';renderFilmProduct()}const view=event.target.closest('[data-film-view]');if(view){filmView=view.dataset.filmView;renderFilmProduct()}if(event.target.closest('[data-film-close]'))closeFilmProduct();if(event.target.closest('[data-film-full]'))closeFilmProduct()});
+    document.addEventListener('pointermove',event=>{
+      if(event.pointerType!=='mouse')return;
+      const frame=event.target.closest('.product-image,.film-product-dialog__media');
+      if(!frame)return;
+      const rect=frame.getBoundingClientRect();
+      const x=Math.max(0,Math.min(100,(event.clientX-rect.left)/rect.width*100));
+      const y=Math.max(0,Math.min(100,(event.clientY-rect.top)/rect.height*100));
+      const image=frame.querySelector('img');
+      if(image)image.style.transformOrigin=`${x}% ${y}%`;
+      frame.classList.add('is-zooming');
+    });
+    document.addEventListener('pointerout',event=>{
+      const frame=event.target.closest('.product-image,.film-product-dialog__media');
+      if(frame&&!frame.contains(event.relatedTarget))frame.classList.remove('is-zooming');
+    });
+    document.addEventListener('click',event=>{const trigger=event.target.closest('[data-film-model]');if(trigger){const model=catalog.find(m=>slug(m)===trigger.dataset.filmModel);if(model)openFilmProduct(model,trigger)}const related=event.target.closest('[data-film-related-model]');if(related){const model=catalog.find(m=>slug(m)===related.dataset.filmRelatedModel);if(model){filmProduct=model;filmVariant=model.variants.find(v=>v.front_path)||model.variants[0];filmView='front';filmQuantity=1;renderFilmProduct();$('#filmProductDialog').scrollTop=0;related.focus()}}const railArrow=event.target.closest('[data-film-rail-scroll]');if(railArrow)$('#filmProductRailTrack').scrollBy({left:$('#filmProductRailTrack').clientWidth*.85*Number(railArrow.dataset.filmRailScroll),behavior:'smooth'});const variant=event.target.closest('[data-film-variant]');if(variant&&filmProduct){filmVariant=filmProduct.variants.find(v=>v.source_id===variant.dataset.filmVariant)||filmVariant;filmView='front';renderFilmProduct()}const view=event.target.closest('[data-film-view]');if(view){filmView=view.dataset.filmView;renderFilmProduct()}if(event.target.closest('[data-film-add]'))addOrder(filmProduct,filmVariant,filmQuantity);if(event.target.closest('[data-film-catalog]')){closeFilmProduct();if(location.hash==='#/catalogo')$('#catalog-results').scrollIntoView({behavior:'smooth',block:'start'});else{jumpToCatalogFromDialog=true;location.hash='#/catalogo'}}if(event.target.closest('[data-film-close]'))closeFilmProduct();if(event.target.closest('[data-film-full]'))closeFilmProduct()});
+    $('#filmProductDialog').addEventListener('input',event=>{if(event.target.matches('[data-film-quantity]'))filmQuantity=Math.max(1,Math.min(999,Number(event.target.value)||1))});
     $('#filmProductDialog').addEventListener('click',event=>{if(event.target===$('#filmProductDialog'))closeFilmProduct()});
-    $('#filmProductDialog').addEventListener('close',()=>{filmProduct=null;filmCollection=null;filmReturnFocus?.focus();filmReturnFocus=null});
+    $('#filmProductDialog').addEventListener('close',()=>{if(window.parent!==window)window.parent.postMessage({type:'innova-boutique:modal-state',brand:'jisco',open:false},parentOrigin);filmProduct=null;filmCollection=null;filmReturnFocus?.focus();filmReturnFocus=null});
     const miniShell=$('.innova-mini-menu-shell');
     const miniTrigger=$('[data-mini-menu-trigger]');
     const closeMiniMenu=()=>{miniShell.classList.remove('is-open');miniTrigger.setAttribute('aria-expanded','false')};
