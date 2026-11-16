@@ -63,6 +63,17 @@
     en:{Acetato:'Acetate',Metal:'Metal',Nylon:'Nylon',Titanium:'Titanium',Hombre:'Men',Mujer:'Women',Unisex:'Unisex'},
     fr:{Acetato:'Acétate',Metal:'Métal',Nylon:'Nylon',Titanium:'Titane',Hombre:'Homme',Mujer:'Femme',Unisex:'Unisexe'}
   }[lang]||{})[value]||value;
+  const colorTranslations={
+    en:{AMARILLO:'Yellow',AZUL:'Blue',BEIGE:'Beige',BLANCO:'White',CRISTAL:'Crystal',CUERNO:'Horn',GRIS:'Grey',HAVANA:'Havana',LILA:'Lilac',MARFIL:'Ivory',MARRÓN:'Brown',METAL:'Metal',NARANJA:'Orange',NEGRO:'Black',OLIVA:'Olive',ORO:'Gold',PLATA:'Silver',ROJO:'Red',ROSA:'Pink',ROSADO:'Rose',TURQUESA:'Turquoise',VERDE:'Green'},
+    fr:{AMARILLO:'Jaune',AZUL:'Bleu',BEIGE:'Beige',BLANCO:'Blanc',CRISTAL:'Cristal',CUERNO:'Corne',GRIS:'Gris',HAVANA:'Havane',LILA:'Lilas',MARFIL:'Ivoire',MARRÓN:'Marron',METAL:'Métal',NARANJA:'Orange',NEGRO:'Noir',OLIVA:'Olive',ORO:'Doré',PLATA:'Argenté',ROJO:'Rouge',ROSA:'Rose',ROSADO:'Rosé',TURQUESA:'Turquoise',VERDE:'Vert'}
+  };
+  const localizedColorName=(value,sentence=false)=>{
+    if(lang==='es')return String(value||'');
+    const names=String(value||'').split(',').map(name=>name.trim()).filter(Boolean);
+    const translated=names.map(name=>(colorTranslations[lang]?.[name]||name).toLocaleLowerCase(lang)).join(lang==='fr'?' et ':' and ');
+    return sentence?translated:translated.charAt(0).toLocaleUpperCase(lang)+translated.slice(1);
+  };
+  const normalizeSearch=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase();
   const localizedMaterials=values=>(values||[]).map(localizeValue).join(', ');
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
@@ -75,7 +86,7 @@
     $$('#language').forEach(el=>el.value=lang);
     $$('[data-t]').forEach(el=>{el.textContent=t(el.dataset.t)});
     $('#searchInput').placeholder=t('search');$('#language').setAttribute('aria-label',t('language'));
-    ['materialFilter','styleFilter'].forEach(id=>[...$('#'+id).options].forEach(option=>{if(option.value)option.textContent=localizeValue(option.value)}));
+    ['materialFilter','styleFilter','colorFilter'].forEach(id=>[...$('#'+id).options].forEach(option=>{if(option.value)option.textContent=id==='colorFilter'?localizedColorName(option.value):localizeValue(option.value)}));
     renderRoute();
   }
   function option(select,value,label){const el=document.createElement('option');el.value=value;el.textContent=label;select.append(el)}
@@ -87,9 +98,9 @@
     for(const value of materials)option($('#materialFilter'),value,localizeValue(value));
     for(const value of styles)option($('#styleFilter'),value,localizeValue(value));
     for(const value of sizes)option($('#sizeFilter'),value,value);
-    for(const value of colors)option($('#colorFilter'),value,value);
+    for(const value of colors)option($('#colorFilter'),value,localizedColorName(value));
   }
-  function getFilters(){return {q:$('#searchInput').value.trim().toLocaleLowerCase(),category:$('#categoryFilter').value,material:$('#materialFilter').value,style:$('#styleFilter').value,size:$('#sizeFilter').value,color:$('#colorFilter').value,newOnly:$('#newFilter').checked}}
+  function getFilters(){return {q:normalizeSearch($('#searchInput').value.trim()),category:$('#categoryFilter').value,material:$('#materialFilter').value,style:$('#styleFilter').value,size:$('#sizeFilter').value,color:$('#colorFilter').value,newOnly:$('#newFilter').checked}}
   function visibleModels(){
     const f=getFilters();
     return catalog.filter(m=>{
@@ -99,7 +110,7 @@
       if(f.size&&m.size!==f.size)return false;
       if(f.newOnly&&m.season_id!=='298')return false;
       if(f.color&&!m.variants.some(v=>v.color_name.split(',').map(s=>s.trim()).includes(f.color)))return false;
-      if(f.q&&!([m.name,...m.variants.flatMap(v=>[v.sku,v.color_name])].join(' ').toLocaleLowerCase().includes(f.q)))return false;
+      if(f.q&&!normalizeSearch([m.name,...m.variants.flatMap(v=>[v.sku,v.color_name,localizedColorName(v.color_name)])].join(' ')).includes(f.q))return false;
       return true;
     });
   }
@@ -109,12 +120,12 @@
     $('#emptyResults').hidden=models.length>0;
     $('#modelGrid').innerHTML=models.map(m=>{
       const v=m.variants.find(x=>x.front_path)||m.variants[0];
-      return `<a class="model-card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"><figure>${m.season_id==='298'?`<em class="model-new-badge">${esc(t('newBadge'))}</em>`:''}<img src="${esc(variantImage(v))}" alt="${esc(m.name)} · ${esc(v.color_name)}" loading="lazy"></figure><div class="model-card__body"><strong class="model-card__title">${esc(m.name)}</strong><span class="model-card__meta">${esc(m.category==='sun'?t('sun'):t('optical'))}<br>${m.variants.length} ${t('variants')}</span></div></a>`;
+      return `<a class="model-card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"><figure>${m.season_id==='298'?`<em class="model-new-badge">${esc(t('newBadge'))}</em>`:''}<img src="${esc(variantImage(v))}" alt="${esc(m.name)} · ${esc(localizedColorName(v.color_name))}" loading="lazy"></figure><div class="model-card__body"><strong class="model-card__title">${esc(m.name)}</strong><span class="model-card__meta">${esc(m.category==='sun'?t('sun'):t('optical'))}<br>${m.variants.length} ${t('variants')}</span></div></a>`;
     }).join('');
   }
   function railCard(m,related=false){
     const v=m.variants.find(x=>x.front_path)||m.variants[0];
-    return `<a class="model-rail__card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"${related?' data-related-product':''}>${m.season_id==='298'?`<em class="model-new-badge">${esc(t('newBadge'))}</em>`:''}<img src="${esc(variantImage(v))}" alt="${esc(m.name+' · '+v.color_name)}" loading="lazy"><span><strong>${esc(m.name)}</strong><small>${esc(m.category==='sun'?t('sun'):t('optical'))} · ${m.variants.length} ${esc(t('variants'))}</small></span></a>`;
+    return `<a class="model-rail__card" href="#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}"${related?' data-related-product':''}>${m.season_id==='298'?`<em class="model-new-badge">${esc(t('newBadge'))}</em>`:''}<img src="${esc(variantImage(v))}" alt="${esc(m.name+' · '+localizedColorName(v.color_name))}" loading="lazy"><span><strong>${esc(m.name)}</strong><small>${esc(m.category==='sun'?t('sun'):t('optical'))} · ${m.variants.length} ${esc(t('variants'))}</small></span></a>`;
   }
   function modelRail(models,label,id,related=false){
     return `<div class="model-rail"><div class="model-rail__head"><div><span class="eyebrow">JISCO / ${models.length} ${esc(t('models'))}</span><h3>${esc(label)}</h3></div><div class="model-rail__arrows"><button type="button" data-rail-scroll="-1" aria-controls="${esc(id)}" aria-label="${esc(t('previous'))}">←</button><button type="button" data-rail-scroll="1" aria-controls="${esc(id)}" aria-label="${esc(t('next'))}">→</button></div></div><div class="model-rail__track" id="${esc(id)}">${models.map(model=>railCard(model,related)).join('')}</div></div>`;
@@ -123,8 +134,16 @@
     const material=localizedMaterials(variant.materials||model.materials||[]);
     const style=localizeValue(model.style||'—');
     const finishes=model.variants.length;
-    if(lang==='en')return `${model.name} is a JISCO ${model.category==='sun'?'sun':'optical'} frame in ${material || 'the listed materials'}, size ${model.size || '—'}, listed in the ${style} category. This reference is ${variant.sku} in ${variant.color_name}. The official catalogue lists ${finishes} finishes for this model.`;
-    if(lang==='fr')return `${model.name} est une monture JISCO ${model.category==='sun'?'solaire':'optique'} en ${material || 'matériaux indiqués'}, taille ${model.size || '—'}, dans la catégorie ${style}. Cette référence est ${variant.sku} en ${variant.color_name}. Le catalogue officiel présente ${finishes} finitions pour ce modèle.`;
+    if(lang==='en'){
+      const wearer={Hombre:'for men',Mujer:'for women',Unisex:'for everyone'}[model.style]||`in the ${style} category`;
+      const color=localizedColorName(variant.color_name,true);
+      return `${model.name} is a JISCO ${model.category==='sun'?'sunglasses':'optical'} frame made from ${material || 'the listed materials'}, size ${model.size || '—'}, designed ${wearer}. ${color?`Reference ${variant.sku} is shown in ${color}.`:`Its reference is ${variant.sku}.`} The official catalogue lists ${finishes} finishes for this model.`;
+    }
+    if(lang==='fr'){
+      const wearer={Hombre:'pour homme',Mujer:'pour femme',Unisex:'unisexe'}[model.style]||`de style ${style}`;
+      const color=localizedColorName(variant.color_name,true);
+      return `${model.name} est une monture JISCO ${model.category==='sun'?'solaire':'optique'} en ${material || 'matériaux indiqués'}, taille ${model.size || '—'}, ${wearer}. ${color?`La référence ${variant.sku} se présente dans un coloris ${color}.`:`La référence de ce modèle est ${variant.sku}.`} Le catalogue officiel présente ${finishes} finitions pour ce modèle.`;
+    }
     return `${model.name} es una montura JISCO de ${model.category==='sun'?'sol':'óptica'} en ${material || 'los materiales indicados'}, talla ${model.size || '—'} y estilo ${style}. Esta referencia es ${variant.sku}, en color ${variant.color_name}. El catálogo oficial registra ${finishes} acabados para este modelo.`;
   }
   function relatedModels(model){
@@ -138,7 +157,7 @@
     const style=localizeValue(model.style||'');
     const measures=Object.entries(activeVariant.measurements||{}).map(([k,v])=>`<div><strong>${esc(k)}</strong><span>${esc(v)}</span></div>`).join('');
     const hasSide=Boolean(activeVariant.side_path||activeVariant.side_url);
-    $('#productContent').innerHTML=`<a class="product-back" href="#/catalogo">${t('viewCatalog')}</a><div class="product-main"><div><figure class="product-image"><img id="mainProductImage" src="${esc(variantImage(activeVariant))}" alt="${esc(model.name+' '+activeVariant.color_name+', '+t('front'))}"></figure><p class="product-image-credit">${esc(t('productPhotoBy'))}</p><div class="view-tabs"><button type="button" data-view-image="front" aria-pressed="true">${t('front')}</button>${hasSide?`<button type="button" data-view-image="side" aria-pressed="false">${t('side')}</button>`:''}</div></div><div class="product-info"><span class="eyebrow">JISCO · ${model.category==='sun'?t('sun'):t('optical')}</span><h1>${esc(model.name)}</h1><span class="sku">${esc(activeVariant.sku)}</span><p>${esc(material)}${style?' · '+esc(style):''}${model.size?' · '+esc(model.size):''}</p><div class="colors" role="group" aria-label="${esc(t('color'))}">${model.variants.map(v=>`<button type="button" data-variant="${esc(v.source_id)}" aria-pressed="${v.source_id===activeVariant.source_id}"><img src="${esc(variantImage(v))}" alt="" loading="lazy"><span>${esc(v.color_name||v.path.split('/').pop())}</span></button>`).join('')}</div><h2 class="eyebrow">${t('measures')}</h2><div class="measurements">${measures}</div><div class="purchase"><label>${t('quantity')} <input id="quantity" type="number" min="1" max="999" value="1" inputmode="numeric"></label><button class="button" id="addOrder" type="button">${t('add')} ↗</button><p>${t('availability')}</p></div></div></div><section class="product-details"><span class="eyebrow">${esc(t('sourceDetails'))}</span><h2>${esc(t('technicalTitle'))}</h2><p>${esc(productDescription(model,activeVariant))}</p><dl><div><dt>${esc(t('frameLabel'))}</dt><dd>${esc(model.category==='sun'?t('sun'):t('optical'))}</dd></div><div><dt>${esc(t('materialLabel'))}</dt><dd>${esc(material||'—')}</dd></div><div><dt>${esc(t('sizeLabel'))}</dt><dd>${esc(model.size||'—')}</dd></div><div><dt>${esc(t('styleLabel'))}</dt><dd>${esc(style||'—')}</dd></div><div><dt>${esc(t('colorsLabel'))}</dt><dd>${esc(activeVariant.color_name)}</dd></div><div><dt>${esc(t('finishLabel'))}</dt><dd>${model.variants.length}</dd></div></dl></section><section class="product-related"><p>${esc(t('relatedIntro'))}</p>${modelRail(relatedModels(model),t('relatedTitle'),'relatedModels')}</section><nav class="product-nav"><a href="#/modelo/${encodeURIComponent(slug(catalog[(index-1+catalog.length)%catalog.length]))}">${t('previous')}</a><a href="#/modelo/${encodeURIComponent(slug(catalog[(index+1)%catalog.length]))}">${t('next')}</a></nav>`;
+    $('#productContent').innerHTML=`<a class="product-back" href="#/catalogo">${t('viewCatalog')}</a><div class="product-main"><div><figure class="product-image"><img id="mainProductImage" src="${esc(variantImage(activeVariant))}" alt="${esc(model.name+' '+localizedColorName(activeVariant.color_name)+', '+t('front'))}"></figure><p class="product-image-credit">${esc(t('productPhotoBy'))}</p><div class="view-tabs"><button type="button" data-view-image="front" aria-pressed="true">${t('front')}</button>${hasSide?`<button type="button" data-view-image="side" aria-pressed="false">${t('side')}</button>`:''}</div></div><div class="product-info"><span class="eyebrow">JISCO · ${model.category==='sun'?t('sun'):t('optical')}</span><h1>${esc(model.name)}</h1><span class="sku">${esc(activeVariant.sku)}</span><p>${esc(material)}${style?' · '+esc(style):''}${model.size?' · '+esc(model.size):''}</p><div class="colors" role="group" aria-label="${esc(t('color'))}">${model.variants.map(v=>`<button type="button" data-variant="${esc(v.source_id)}" aria-pressed="${v.source_id===activeVariant.source_id}"><img src="${esc(variantImage(v))}" alt="" loading="lazy"><span>${esc(localizedColorName(v.color_name||v.path.split('/').pop()))}</span></button>`).join('')}</div><h2 class="eyebrow">${t('measures')}</h2><div class="measurements">${measures}</div><div class="purchase"><label>${t('quantity')} <input id="quantity" type="number" min="1" max="999" value="1" inputmode="numeric"></label><button class="button" id="addOrder" type="button">${t('add')} ↗</button><p>${t('availability')}</p></div></div></div><section class="product-details"><span class="eyebrow">${esc(t('sourceDetails'))}</span><h2>${esc(t('technicalTitle'))}</h2><p>${esc(productDescription(model,activeVariant))}</p><dl><div><dt>${esc(t('frameLabel'))}</dt><dd>${esc(model.category==='sun'?t('sun'):t('optical'))}</dd></div><div><dt>${esc(t('materialLabel'))}</dt><dd>${esc(material||'—')}</dd></div><div><dt>${esc(t('sizeLabel'))}</dt><dd>${esc(model.size||'—')}</dd></div><div><dt>${esc(t('styleLabel'))}</dt><dd>${esc(style||'—')}</dd></div><div><dt>${esc(t('colorsLabel'))}</dt><dd>${esc(localizedColorName(activeVariant.color_name))}</dd></div><div><dt>${esc(t('finishLabel'))}</dt><dd>${model.variants.length}</dd></div></dl></section><section class="product-related"><p>${esc(t('relatedIntro'))}</p>${modelRail(relatedModels(model),t('relatedTitle'),'relatedModels')}</section><nav class="product-nav"><a href="#/modelo/${encodeURIComponent(slug(catalog[(index-1+catalog.length)%catalog.length]))}">${t('previous')}</a><a href="#/modelo/${encodeURIComponent(slug(catalog[(index+1)%catalog.length]))}">${t('next')}</a></nav>`;
     if(model.season_id==='298')$('#productContent .product-info .eyebrow').insertAdjacentHTML('afterend',`<span class="product-new-badge">${esc(t('newBadge'))}</span>`);
     $$('#relatedModels a').forEach(link=>link.dataset.relatedProduct='');
     $$('[data-variant]').forEach(button=>button.addEventListener('click',()=>{
@@ -148,7 +167,7 @@
     $$('[data-view-image]').forEach(button=>button.addEventListener('click',()=>{
       activeView=button.dataset.viewImage;
       $('#mainProductImage').src=variantImage(activeVariant,activeView);
-      $('#mainProductImage').alt=`${model.name} ${activeVariant.color_name}, ${t(activeView)}`;
+      $('#mainProductImage').alt=`${model.name} ${localizedColorName(activeVariant.color_name)}, ${t(activeView)}`;
       $$('[data-view-image]').forEach(el=>el.setAttribute('aria-pressed',String(el===button)));
     }));
     $('#addOrder').addEventListener('click',()=>addOrder());
@@ -201,7 +220,7 @@
     if(!filmProduct||!filmVariant)return;
     const v=filmVariant,m=filmProduct;
     const side=Boolean(v.side_path||v.side_url);
-    $('#filmProductContent').innerHTML=`<div class="film-product-dialog__media"><img src="${esc(variantImage(v,filmView))}" alt="${esc(m.name+' · '+v.color_name+' · '+t(filmView==='side'?'side':'front'))}"><span>© JISCO EYEWEAR</span></div><div class="film-product-dialog__info"><span class="eyebrow">JISCO / ${esc(t('featuredModel'))}</span><h2 id="filmProductTitle">${esc(m.name)}</h2><span class="sku">${esc(v.sku)}</span><p>${esc(productDescription(m,v))}</p><p class="film-product-dialog__note">${esc(t('modelShown'))}</p><div class="film-product-dialog__views" role="group" aria-label="${esc(t('front'))} / ${esc(t('side'))}"><button type="button" data-film-view="front" aria-pressed="${filmView==='front'}">${esc(t('front'))}</button>${side?`<button type="button" data-film-view="side" aria-pressed="${filmView==='side'}">${esc(t('side'))}</button>`:''}</div><div class="film-product-dialog__variants" role="group" aria-label="${esc(t('color'))}">${m.variants.map(option=>`<button type="button" data-film-variant="${esc(option.source_id)}" aria-pressed="${option.source_id===v.source_id}"><img src="${esc(variantImage(option))}" alt=""><span>${esc(option.color_name)}</span></button>`).join('')}</div><div class="film-product-dialog__purchase"><label for="filmQuantity">${esc(t('quantity'))}</label><input id="filmQuantity" data-film-quantity type="number" inputmode="numeric" min="1" max="999" value="${filmQuantity}"><button type="button" data-film-add>${esc(t('add'))} ↗</button></div><p class="film-product-dialog__availability">${esc(t('availability'))}</p></div>`;
+    $('#filmProductContent').innerHTML=`<div class="film-product-dialog__media"><img src="${esc(variantImage(v,filmView))}" alt="${esc(m.name+' · '+localizedColorName(v.color_name)+' · '+t(filmView==='side'?'side':'front'))}"><span>© JISCO EYEWEAR</span></div><div class="film-product-dialog__info"><span class="eyebrow">JISCO / ${esc(t('featuredModel'))}</span><h2 id="filmProductTitle">${esc(m.name)}</h2><span class="sku">${esc(v.sku)}</span><p>${esc(productDescription(m,v))}</p><p class="film-product-dialog__note">${esc(t('modelShown'))}</p><div class="film-product-dialog__views" role="group" aria-label="${esc(t('front'))} / ${esc(t('side'))}"><button type="button" data-film-view="front" aria-pressed="${filmView==='front'}">${esc(t('front'))}</button>${side?`<button type="button" data-film-view="side" aria-pressed="${filmView==='side'}">${esc(t('side'))}</button>`:''}</div><div class="film-product-dialog__variants" role="group" aria-label="${esc(t('color'))}">${m.variants.map(option=>`<button type="button" data-film-variant="${esc(option.source_id)}" aria-pressed="${option.source_id===v.source_id}"><img src="${esc(variantImage(option))}" alt=""><span>${esc(localizedColorName(option.color_name))}</span></button>`).join('')}</div><div class="film-product-dialog__purchase"><label for="filmQuantity">${esc(t('quantity'))}</label><input id="filmQuantity" data-film-quantity type="number" inputmode="numeric" min="1" max="999" value="${filmQuantity}"><button type="button" data-film-add>${esc(t('add'))} ↗</button></div><p class="film-product-dialog__availability">${esc(t('availability'))}</p></div>`;
     const fullLink=$('[data-film-full]');
     fullLink.href=`#/modelo/${encodeURIComponent(slug(m))}/${encodeURIComponent(v.source_id)}`;
     fullLink.textContent=t('openFullProduct');
